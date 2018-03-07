@@ -2,6 +2,8 @@
 
 > 2018/03/06 - init
 
+> 2018/03/07 - add TLS
+
 암호키를 교환하는 방식 중 한가지.
 
 앨리스와 밥이 통신하는 상황에서,
@@ -15,8 +17,23 @@
 
 중간자가 있더라도 `a`, `b`를 알 수 없으므로 비밀키를 알 수 없다.
 
+### On TLS
+
+TLS에서 키 교환 알고리즘으로 DHE를 사용하는 경우는 다음과 같이 사용된다.
+
+1. `ServerKeyExchange` 단계  - `p, g, g^b mod p`
+2. `ClientKeyExchange` 단계 - `g^a mod p`
+
+`g^ab mod p`가 pre-master secret이 되고, `g^a mod p`는 encrypted pre-master secret이 된다.
+
+
+
+
+
 ---
 
 ### Reference
 
 > https://ko.wikipedia.org/wiki/%EB%94%94%ED%94%BC-%ED%97%AC%EB%A8%BC_%ED%82%A4_%EA%B5%90%ED%99%98
+
+> https://security.stackexchange.com/questions/63971/how-is-the-premaster-secret-used-in-tls-generated
