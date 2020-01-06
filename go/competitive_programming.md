@@ -129,3 +129,64 @@ func main() {
 	fmt.Print(s)
 }
 ```
+
+### Output
+
+출력도 입력과 마찬가지로 `bufio`를 활용하여 출력을 버퍼링할 수 있습니다. (`fmt.Printf` 대신 `fmt.Fprintf`)
+
+그러나 newline(`\n`)이 많을 경우 flush 횟수가 많아져 오히려 `fmt.Fprintf`가 더 느릴 수 있습니다.
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"time"
+)
+
+func main() {
+
+	s1 := time.Now()
+	for i := 0; i < 100000; i = i + 1 {
+		fmt.Printf("1")
+	}
+	t1 := time.Since(s1)
+
+	w := bufio.NewWriter(os.Stdout)
+	s2 := time.Now()
+	for i := 0; i < 100000; i = i + 1 {
+		fmt.Fprintf(w, "1")
+	}
+	t2 := time.Since(s2)
+
+	s3 := time.Now()
+	for i := 0; i < 100000; i = i + 1 {
+		fmt.Println("1")
+	}
+	t3 := time.Since(s3)
+
+	ww := bufio.NewWriter(os.Stdout)
+	s4 := time.Now()
+	for i := 0; i < 100000; i = i + 1 {
+		fmt.Fprintln(ww, "1")
+	}
+	t4 := time.Since(s4)
+
+	fmt.Printf("fmt.Printf: %v\n", t1)
+	fmt.Printf("fmt.Fprintf: %v\n", t2)
+	fmt.Printf("fmt.Println: %v\n", t3)
+	fmt.Printf("fmt.Fprintln: %v\n", t4)
+}
+```
+
+```
+fmt.Printf: 2.1709647s
+fmt.Fprintf: 33.0269ms
+fmt.Println: 3.0822985s
+fmt.Fprintln: 14.1889089s
+```
+
+newline 없이 출력하는 경우 `bufio`를 활용하는 것이 월등히 빠르지만,
+반대로 많은 줄을 출력하는 경우 `bufio`가 훨씬 느린 것을 확인할 수 있다.
