@@ -190,3 +190,104 @@ fmt.Fprintln: 14.1889089s
 
 newline 없이 출력하는 경우 `bufio`를 활용하는 것이 월등히 빠르지만,
 반대로 많은 줄을 출력하는 경우 `bufio`가 훨씬 느린 것을 확인할 수 있다.
+
+## Container
+
+### List(Array)
+
+Golang에서 제공하는 기본 `slice` 타입은 `append` 함수를 이용해서 확장이 가능하므로,
+고정된 크기의 배열이 필요할 때나, 동적 확장이 필요할 때나 사용할 수 있다.
+
+```go
+package main
+
+import (
+	"container/list"
+	"fmt"
+	"time"
+)
+
+func main() {
+	sz := 1000000
+
+	s1 := time.Now()
+	l1 := make([]int, sz, sz)
+	for i := 0; i < sz; i += 1 {
+		l1[i] = i
+	}
+	t1 := time.Since(s1)
+
+	s2 := time.Now()
+	l2 := make([]int, 0, 1)
+	for i := 0; i < sz; i += 1 {
+		l2 = append(l2, i)
+	}
+	t2 := time.Since(s2)
+
+	s3 := time.Now()
+	l3 := list.New()
+	for i := 0; i < sz; i += 1 {
+		l3.PushBack(i)
+	}
+	t3 := time.Since(s3)
+
+	fmt.Printf("Assign: %v\n", t1)
+	fmt.Printf("Append: %v\n", t2)
+	fmt.Printf("List: %v\n", t3)
+}
+```
+```
+Assign: 2.992ms
+Append: 9.9731ms
+List: 139.6275ms
+```
+
+물론 `append`는 `slice`의 공간(capacity)이 부족하여 확장하여야 할 때의 코스트가 있으므로,
+단순 assign 방식보다는 느리다.
+해당 부분의 퍼포먼스가 문제가 된다면, 초기에 예상되는 크기를 할당해 놓는 식으로 시간을 단축할 수 있다.
+
+그게 안된다면 `container/list`의 이중 링크드 리스트로 구현된 `list`를 써야겠으나, 퍼포먼스가 매우 떨어지는 편이다.
+
+### Heap(Priority Queue)
+
+`container/heap`에서 `heap` 인터페이스를 지원해주고 있지만,
+아쉽게도 기본적인 integer min heap이나 max heap을 구현할 때에도 직접 함수를 채워주어야 한다.
+
+구현해주어야 하는 함수는 `Len`, `Less`, `Swap`, `Push`, `Pop` 다섯 개.
+
+```go
+package main
+
+import (
+	"container/heap"
+	"fmt"
+)
+
+type MinHeap []int
+
+func (h MinHeap) Len() int           { return len(h) }
+func (h MinHeap) Less(i, j int) bool { return h[i] < h[j] }
+func (h MinHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *MinHeap) Push(x interface{}) {
+	*h = append(*h, x.(int))
+}
+
+func (h *MinHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+func main() {
+	h := &MinHeap{2, 1, 5}
+	heap.Init(h)
+	heap.Push(h, 3)
+	fmt.Printf("minimum: %d\n", (*h)[0])
+	for h.Len() > 0 {
+		fmt.Printf("%d ", heap.Pop(h))
+	}
+}
+```
